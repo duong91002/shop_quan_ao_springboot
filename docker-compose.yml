@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_shopquanao
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: nhaiduong91002
+      MYSQL_DATABASE: shopquanao
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:latest
+    container_name: redis_shopquanao
+    restart: always
+    command: ["redis-server", "--requirepass", "nhaiduong91002"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+
+  shopquanao:
+    image: shopquanao:latest
+    container_name: shopquanao_app
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_shopquanao:3306/shopquanao?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: nhaiduong91002
+      SPRING_REDIS_HOST: redis_shopquanao
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: nhaiduong91002
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  app_network:
