@@ -1,17 +1,22 @@
-# Sử dụng OpenJDK 17 làm base image
-FROM openjdk:21-jdk-slim
 
-# Đặt biến môi trường cho ứng dụng
-ENV APP_NAME=shopquanao-0.0.1-SNAPSHOT.jar
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 
-# Tạo thư mục để chứa ứng dụng
+
 WORKDIR /app
 
-# Sao chép file JAR từ thư mục build vào container
-COPY target/${APP_NAME} app.jar
+COPY pom.xml .
 
-# Cấu hình cổng chạy ứng dụng
-EXPOSE 8080
+COPY src ./src
 
-# Chạy ứng dụng Spring Boot
-ENTRYPOINT ["java", "-jar", "app.jar"]
+RUN mvn package -DskipTests
+
+FROM eclipse-temurin:21
+
+RUN apt-get update && apt-get install -y maven
+
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
+CMD ["java", "-jar", "app.jar"]
+

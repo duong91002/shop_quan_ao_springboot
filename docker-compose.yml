@@ -14,11 +14,6 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - app_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      retries: 5
-      start_period: 30s
 
   redis:
     image: redis:latest
@@ -31,27 +26,35 @@ services:
       - redis_data:/data
     networks:
       - app_network
+    depends_on:
+      - mysql
 
   shopquanao:
-    image: shopquanao:latest
-    container_name: shopquanao_app
-    restart: always
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_shopquanao:3306/shopquanao?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: nhaiduong91002
-      SPRING_REDIS_HOST: redis_shopquanao
-      SPRING_REDIS_PORT: 6379
-      SPRING_REDIS_PASSWORD: nhaiduong91002
-    ports:
-      - "8080:8080"
-    networks:
-      - app_network
+     build: .
+     container_name: shopquanao_app
+     restart: always
+     depends_on:
+       - mysql
+       - redis
+     environment:
+       SPRING_PROFILES_ACTIVE: dev
+       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/shopquanao?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+       SPRING_DATASOURCE_USERNAME: root
+       SPRING_DATASOURCE_PASSWORD: nhaiduong91002
+       SPRING_REDIS_HOST: redis
+       SPRING_REDIS_PORT: 6379
+       SPRING_REDIS_PASSWORD: nhaiduong91002
+       SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+       SPRING_DEVTOOLS_LIVERELOAD_ENABLED: "true"
+     ports:
+       - "8080:8080"
+     working_dir: /app
+     networks:
+       - app_network
+     volumes:
+       - .:/app
+       - ~/.m2:/root/.m2
+     command: mvn spring-boot:run
 
 volumes:
   mysql_data:

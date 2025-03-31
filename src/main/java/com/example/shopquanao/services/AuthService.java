@@ -46,7 +46,8 @@ public class AuthService {
 
     
     public Map<String, Object> register(String email, String password) {
-        if (ur.findByEmail(email) != null) throw new CommonException(HttpStatus.BAD_REQUEST, "Email already exist!");
+
+        if (ur.findByEmail(email).isEmpty()) throw new CommonException(HttpStatus.BAD_REQUEST, "Email already exist!");
 
         User u = new User();
         u.setEmail(email);
